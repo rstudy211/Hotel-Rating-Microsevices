@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/User")
+@RequestMapping("/users")
 public class UserController {
     @Autowired
     private UserService userService;
