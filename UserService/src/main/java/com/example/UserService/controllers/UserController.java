@@ -1,5 +1,4 @@
 package com.example.UserService.controllers;
-
 import com.example.UserService.entities.Hotel;
 import com.example.UserService.entities.Ratings;
 import com.example.UserService.entities.User;
@@ -7,6 +6,7 @@ import com.example.UserService.external.services.HotelService;
 import com.example.UserService.repository.UserRepository;
 
 import com.example.UserService.services.UserService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +17,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+//import static org.springframework.aop.scope.logger;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
     @Autowired
     private UserService userService;
+
     @Autowired
     private HotelService hotelService;
     @Autowired
@@ -37,6 +40,7 @@ public class UserController {
     }
     // get a user
     @GetMapping("/{userId}")
+    @CircuitBreaker(name="ratingHotelBreaker",fallbackMethod = "ratingFallbackMethod")
     public ResponseEntity<User> getUser(@PathVariable String userId){
         User user = userService.getUser(userId);
         Ratings[] ratingsOfUser = restTemplate.getForObject("http://RATING-SERVICE/ratings/users/"+userId, Ratings[].class);
@@ -52,6 +56,14 @@ public class UserController {
         user.setRatings(ratingsList);
         return ResponseEntity.ok(user);
     }
+    // creating fallback method
+    public ResponseEntity<User> ratingFallbackMethod(String userId,Exception ex){
+//        logger.info("fallback is created becauz rating service is down:",ex.getMessage());
+        User user = User.builder().email("dummy@gmail.com").name("Dummy").about("this is dummy data").userId("12345").build();
+        return new ResponseEntity<>(user,HttpStatus.OK);
+
+    }
+
     // get all user
     @GetMapping
     public ResponseEntity<List<User>> getAllUser(){
