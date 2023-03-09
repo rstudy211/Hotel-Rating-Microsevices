@@ -71,3 +71,10 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         slidingWindowSize: 10
         slidingWindowType: COUNT_BASED
+
+  rate-limiter:
+    instances:
+      userRateLimiter:
+        limitRefreshPeriod: 3s
+        limitForPeriod: 5
+        timeoutDuration: 10s

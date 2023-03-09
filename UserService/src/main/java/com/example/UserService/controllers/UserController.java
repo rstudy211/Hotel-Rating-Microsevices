@@ -7,6 +7,7 @@ import com.example.UserService.repository.UserRepository;
 
 import com.example.UserService.services.UserService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,8 @@ public class UserController {
     }
     // get a user
     @GetMapping("/{userId}")
-    @CircuitBreaker(name="ratingHotelBreaker",fallbackMethod = "ratingFallbackMethod")
+//    @CircuitBreaker(name="ratingHotelBreaker",fallbackMethod = "ratingFallbackMethod")
+    @RateLimiter(name = "userRateLimiter",fallbackMethod = "ratingFallbackMethod")
     public ResponseEntity<User> getUser(@PathVariable String userId){
         User user = userService.getUser(userId);
         Ratings[] ratingsOfUser = restTemplate.getForObject("http://RATING-SERVICE/ratings/users/"+userId, Ratings[].class);
@@ -60,7 +62,7 @@ public class UserController {
     public ResponseEntity<User> ratingFallbackMethod(String userId,Exception ex){
 //        logger.info("fallback is created becauz rating service is down:",ex.getMessage());
         User user = User.builder().email("dummy@gmail.com").name("Dummy").about("this is dummy data").userId("12345").build();
-        return new ResponseEntity<>(user,HttpStatus.OK);
+        return new ResponseEntity<>(user,HttpStatus.BAD_REQUEST);
 
     }
 
